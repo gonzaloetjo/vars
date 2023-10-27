@@ -1,0 +1,2 @@
+zk_start_on_boot: true
+zk_restart: always

@@ -1,0 +1,2 @@
+kafka_start_on_boot: true
+kafka_restart: always

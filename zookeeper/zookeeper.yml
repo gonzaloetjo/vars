@@ -1,0 +1,55 @@
+zookeeper_version: 3.4.6
+zookeeper_dist_release: zookeeper-{{ zookeeper_version }}
+zookeeper_dist_file: '{{ zookeeper_dist_release }}.tar.gz'
+zookeeper_user: zookeeper
+hadoop_group: hadoop
+hadoop_root_dir: /opt/tdp
+zookeeper_install_dir: '{{ hadoop_root_dir }}/zookeeper'
+zookeeper_root_conf_dir: /etc/zookeeper
+zookeeper_server_conf_dir: '{{ zookeeper_root_conf_dir }}/conf.server'
+zookeeper_client_conf_dir: '{{ zookeeper_root_conf_dir }}/conf'
+zookeeper_server_service_name: zookeeper
+zookeeper_server_service_desc: ZooKeeper Server
+zk_servers: "{{ groups['zk'] |\n   map('tosit.tdp.access_fqdn', hostvars) |\n   map('regex_replace', '^(.*)$', '\\1:' + (zookeeper_server_quorum_port | string) + ':' + (zookeeper_server_election_port | string)) |\n   list }}\n"
+zookeeper_client_quorum: "{{ groups['zk'] |\n   map('tosit.tdp.access_fqdn', hostvars) |\n   map('regex_replace', '^(.*)$', '\\1:' + zookeeper_server_client_port | string) |\n   list |\n   join(',') }}\n"
+zookeeper_cli_cmd_script: /usr/bin/zkCli.sh
+zookeeper_root_logger_level: INFO
+zookeeper_root_logger: RFA
+zookeeper_log_layout_pattern: '{{ tdp_log_layout_pattern }}'
+zookeeper_log_drfa_date_pattern: '''.''yyyy-MM-dd'
+zookeeper_log_rfa_maxfilesize: 256MB
+zookeeper_log_rfa_maxbackupindex: 10
+krb_create_principals_keytabs: true
+zookeeper_check_retries: 0
+zookeeper_check_delay: 5
+zookeeper_check_port_str: Connected to
+zookeeper_check_znode: /service_check_{{ ansible_date_time.iso8601_basic }}
+zookeeper_cfg:
+  dataDir: '{{ zookeeper_server_data_dirs }}'
+  clientPort: '{{ zookeeper_server_client_port }}'
+  tickTime: 2000
+  initLimit: 10
+  syncLimit: 5
+  authProvider.1: org.apache.zookeeper.server.auth.SASLAuthenticationProvider
+  jaasLoginRenew: 3600000
+  kerberos.removeHostFromPrincipal: 'true'
+  kerberos.removeRealmFromPrincipal: 'true'
+zk_start_on_boot: true
+zk_restart: always
+jmx_exporter_root_dir: /opt/tdp/jmx-exporter
+jmx_exporter_install_file: '{{ jmx_exporter_root_dir }}/jmx-exporter.jar'
+jmx_common_opts: -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.ssl=true
+jmx_exporter_zk_file: zk.yml
+jmx_exporter_zk_opts: '{% if ''exporter_jmx'' in groups and groups[''exporter_jmx''] %}-javaagent:{{ jmx_exporter_install_file }}={{ exporter_zookeeper_server_http_port }}:{{ jmx_exporter_conf_dir }}/{{ jmx_exporter_zk_file }}{% else %}{% endif %}'
+jmx_exporter_conf_dir: /etc/jmx-exporter
+jmxremote_username: jmxuser
+jmxremote_password: Tdpjmx123,
+jmx_exporter:
+  startDelaySeconds: 0
+  ssl: true
+  username: '{{ jmxremote_username }}'
+  password: '{{ jmxremote_password }}'
+  lowercaseOutputName: false
+  lowercaseOutputLabelNames: false
+zookeeper_server_heapsize: 1024m
+zookeeper_server_data_dirs: '{{ zookeeper_install_dir }}/zkData'

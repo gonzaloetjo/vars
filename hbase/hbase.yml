@@ -1,0 +1,147 @@
+hbase_release: hbase-2.1.10-1.0
+hbase_dist_file: '{{ hbase_release }}-bin.tar.gz'
+hbase_hbck2_release: hbase-hbck2-1.1.0-0.0
+hbase_hbck2_file: '{{ hbase_hbck2_release }}.jar'
+hdfs_user: hdfs
+hbase_user: hbase
+hadoop_group: hadoop
+hbase_root_dir: /opt/tdp
+hbase_install_dir: '{{ hbase_root_dir }}/hbase'
+hadoop_conf_dir: /etc/hadoop/conf
+hadoop_home: /opt/tdp/hadoop
+hbase_root_conf_dir: /etc/hbase
+hbase_master_conf_dir: '{{ hbase_root_conf_dir }}/conf.master'
+hbase_rs_conf_dir: '{{ hbase_root_conf_dir }}/conf.rs'
+hbase_rest_conf_dir: '{{ hbase_root_conf_dir }}/conf.rest'
+hbase_client_conf_dir: '{{ hbase_root_conf_dir }}/conf'
+jmx_exporter_root_dir: /opt/tdp/jmx-exporter
+jmx_exporter_install_file: '{{ jmx_exporter_root_dir }}/jmx-exporter.jar'
+jmx_exporter_conf_dir: /etc/jmx-exporter
+jmx_common_opts: -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.ssl=true
+jmx_exporter_hm_opts: '{% if ''exporter_jmx'' in groups and groups[''exporter_jmx''] %}-javaagent:{{ jmx_exporter_install_file }}={{ exporter_hbase_hm_http_port }}:{{ jmx_exporter_conf_dir }}/hm.yml{% else %}{% endif %}'
+jmx_exporter_hrs_opts: '{% if ''exporter_jmx'' in groups and groups[''exporter_jmx''] %}-javaagent:{{ jmx_exporter_install_file }}={{ exporter_hbase_hrs_http_port }}:{{ jmx_exporter_conf_dir }}/hrs.yml{% else %}{% endif %}'
+jmx_exporter_hr_opts: '{% if ''exporter_jmx'' in groups and groups[''exporter_jmx''] %}-javaagent:{{ jmx_exporter_install_file }}={{ exporter_hbase_hr_http_port }}:{{ jmx_exporter_conf_dir }}/hr.yml{% else %}{% endif %}'
+jmx_exporter_pqs_opts: '{% if ''exporter_jmx'' in groups and groups[''exporter_jmx''] %}-javaagent:{{ jmx_exporter_install_file }}={{ exporter_hbase_pqs_http_port }}:{{ jmx_exporter_conf_dir }}/pqs.yml{% else %}{% endif %}'
+hbase_pid_dir: /var/run/hbase
+hbase_root_logger_level: INFO
+hbase_root_logger: RFA
+hbase_log_layout_pattern: '{{ tdp_log_layout_pattern }}'
+hbase_log_drfa_date_pattern: '''.''yyyy-MM-dd'
+hbase_log_rfa_maxfilesize: 256MB
+hbase_log_rfa_maxbackupindex: 10
+krb_create_principals_keytabs: true
+hbase_keystore_location: /etc/ssl/certs/keystore.jks
+hbase_keystore_password: Keystore123!
+hbase_truststore_location: /etc/ssl/certs/truststore.jks
+hbase_truststore_password: Truststore123!
+ssl_server:
+  ssl.server.keystore.location: '{{ hbase_keystore_location }}'
+  ssl.server.truststore.location: '{{ hbase_truststore_location }}'
+hadoop_credentials_store_file: hbase.jceks
+hadoop_credentials_properties:
+- property: ssl.server.keystore.password
+  value: '{{ hbase_keystore_password }}'
+- property: ssl.server.truststore.password
+  value: '{{ hbase_truststore_password }}'
+java_home: /usr/lib/jvm/jre-1.8.0-openjdk
+hbase_zookeeper_quorum: "{{ groups['zk'] |\n   map('tosit.tdp.access_fqdn', hostvars) |\n   list |\n   join(',') }}\n"
+hbase_site:
+  hbase.rootdir: hdfs://{{ cluster_name }}/hbase
+  hbase.cluster.distributed: 'true'
+  hbase.zookeeper.quorum: '{{ hbase_zookeeper_quorum | trim }}'
+  hbase.zookeeper.property.clientPort: '{{ zookeeper_server_client_port }}'
+  hbase.zookeeper.property.authProvider.1: org.apache.zookeeper.server.auth.SASLAuthenticationProvider
+  hbase.zookeeper.property.kerberos.removeHostFromPrincipal: 'true'
+  hbase.zookeeper.property.kerberos.removeRealmFromPrincipal: 'true'
+  hbase.ssl.enabled: 'true'
+  hbase.security.authentication.ui: kerberos
+  hbase.security.authentication.spnego.kerberos.keytab: /etc/security/keytabs/spnego.service.keytab
+  hbase.security.authentication.spnego.kerberos.principal: HTTP/_HOST@{{ realm }}
+  hbase.security.authentication: kerberos
+  hbase.security.authorization: 'true'
+  hbase.master.port: '{{ hbase_master_rpc_port }}'
+  hbase.master.info.port: '{{ hbase_master_info_port }}'
+  hbase.master.keytab.file: /etc/security/keytabs/hbase.service.keytab
+  hbase.master.kerberos.principal: hbase/_HOST@{{ realm }}
+  hbase.regionserver.port: '{{ hbase_rs_rpc_port }}'
+  hbase.regionserver.info.port: '{{ hbase_rs_info_port }}'
+  hbase.regionserver.keytab.file: /etc/security/keytabs/hbase.service.keytab
+  hbase.regionserver.kerberos.principal: hbase/_HOST@{{ realm }}
+  hbase.rest.keytab.file: /etc/security/keytabs/hbase.service.keytab
+  hbase.rest.kerberos.principal: hbase/_HOST@{{ realm }}
+  hbase.rest.authentication.type: kerberos
+  hbase.rest.authentication.kerberos.keytab: /etc/security/keytabs/spnego.service.keytab
+  hbase.rest.authentication.kerberos.principal: HTTP/_HOST@{{ realm }}
+  hbase.rest.support.proxyuser: 'true'
+  hbase.rest.ssl.enabled: 'true'
+  hbase.rest.ssl.keystore.store: '{{ hbase_keystore_location }}'
+  hbase.rest.port: '{{ hbase_rest_client_port }}'
+  hbase.rest.info.port: '{{ hbase_rest_info_port }}'
+  hbase.coprocessor.region.classes: org.apache.hadoop.hbase.security.token.TokenProvider
+hbase_master_kerberos_principal: hbase/{{ ansible_fqdn }}@{{ realm }}
+hbase_regionserver_kerberos_principal: hbase/{{ ansible_fqdn }}@{{ realm }}
+hbase_rest_kerberos_principal: hbase/{{ ansible_fqdn }}@{{ realm }}
+ranger_hbase_release: ranger-2.0.0-1.0-hbase-plugin
+ranger_hbase_dist_file: '{{ ranger_hbase_release }}.tar.gz'
+ranger_hbase_install_dir: '{{ hbase_root_dir }}/ranger-hbase-plugin'
+ranger_hbase_install_properties:
+  POLICY_MGR_URL: '{% if ranger_ha_address is defined %}{{ ranger_ha_address }}{% else %}https://{{ groups[''ranger_admin''][0] | tosit.tdp.access_fqdn(hostvars) }}:{{ ranger_adm_https_port }}{% endif %}'
+  REPOSITORY_NAME: hbase-tdp
+  XAAUDIT_SOLR_ENABLE: '{% if ''ranger_solr'' in groups and groups[''ranger_solr''] %}true{% else %}false{% endif %}'
+  XAAUDIT_SOLR_URL: '{% if ''ranger_solr'' in groups and groups[''ranger_solr''] %}http://{{ groups[''ranger_solr''][0] | tosit.tdp.access_fqdn(hostvars) }}:{{ ranger_solr_http_port }}/solr/ranger_audits{% else %}NONE{% endif %}'
+  audit_hdfs: hdfs://{{ cluster_name }}
+  zookeeper_quorum: '{{ hbase_zookeeper_quorum | trim }}'
+  zookeeper_port: '{{ zookeeper_server_client_port }}'
+hbase_master_start_on_boot: true
+hbase_rs_start_on_boot: true
+hbase_rest_start_on_boot: true
+phoenix_queryserver_start_on_boot: true
+hbase_master_restart: always
+hbase_rs_restart: always
+hbase_rest_restart: always
+phoenix_queryserver_restart: always
+phoenix_release: phoenix-hbase-2.1-5.1.3-1.0-bin
+phoenix_server_release: phoenix-server-hbase-2.1-5.1.3-1.0
+phoenix_dist_file: '{{ phoenix_release }}.tar.gz'
+phoenix_queryserver_release: phoenix-queryserver-6.0.0-0.0
+phoenix_queryserver_dist_file: '{{ phoenix_queryserver_release }}-bin.tar.gz'
+phoenix_root_dir: /opt/tdp
+phoenix_install_dir: '{{ phoenix_root_dir }}/phoenix'
+phoenix_queryserver_root_dir: /opt/tdp
+phoenix_queryserver_install_dir: '{{ phoenix_queryserver_root_dir }}/phoenix-queryserver'
+hbase_phoenix_queryserver_daemon_conf_dir: '{{ hbase_root_conf_dir }}/conf.phoenix-queryserver-daemon'
+hbase_phoenix_queryserver_client_conf_dir: '{{ hbase_root_conf_dir }}/conf.phoenix-queryserver-client'
+phoenix_queryserver_user: phoenix_queryserver
+phoenix_queryserver_pid_dir: /var/run/phoenix-queryserver
+phoenix_zookeeper_quorum: '{{ hbase_zookeeper_quorum | trim }}:{{ zookeeper_server_client_port }}/'
+phoenix_queryserver_hbase_site:
+  phoenix.queryserver.http.port: '{{ phoenix_queryserver_http_port }}'
+  phoenix.queryserver.keytab.file: /etc/security/keytabs/phoenixqueryserver.service.keytab
+  phoenix.queryserver.kerberos.principal: phoenixqueryserver/_HOST@{{ realm }}
+  phoenix.queryserver.http.keytab.file: /etc/security/keytabs/spnego.service.keytab
+  phoenix.queryserver.http.kerberos.principal: HTTP/_HOST@{{ realm }}
+  phoenix.queryserver.tls.enabled: 'true'
+  phoenix.queryserver.tls.keystore: '{{ hbase_keystore_location }}'
+  phoenix.queryserver.tls.keystore.password: '{{ hbase_keystore_password }}'
+  phoenix.queryserver.tls.truststore: '{{ hbase_truststore_location }}'
+  phoenix.queryserver.tls.truststore.password: '{{ hbase_truststore_password }}'
+phoenix_queryserver_properties: '{{ hbase_site | combine(phoenix_queryserver_hbase_site) }}'
+phoenix_root_logger_level: INFO
+phoenix_root_logger: RFA
+phoenix_log_layout_pattern: '{{ tdp_log_layout_pattern }}'
+phoenix_log_drfa_date_pattern: '''.''yyyy-MM-dd'
+phoenix_log_rfa_maxfilesize: 256MB
+phoenix_log_rfa_maxbackupindex: 10
+hbase_master_heapsize: 1024m
+hbase_rs_heapsize: 1024m
+hbase_rest_heapsize: 1024m
+phoenix_queryserver_heapsize: 1024m
+jmxremote_username: jmxuser
+jmxremote_password: Tdpjmx123,
+jmx_exporter:
+  startDelaySeconds: 0
+  ssl: true
+  username: '{{ jmxremote_username }}'
+  password: '{{ jmxremote_password }}'
+  lowercaseOutputName: false
+  lowercaseOutputLabelNames: false

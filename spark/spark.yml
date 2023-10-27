@@ -1,0 +1,116 @@
+spark_version: spark
+spark_release: spark-2.3.4-1.0-bin-tdp
+spark_dist_file: '{{ spark_release }}.tgz'
+spark_hbase_dist_file: hbase-spark-2.3.4-1.0.0-0.0.jar
+spark_hbase_connector_enable: true
+spark_user: spark
+hadoop_group: hadoop
+spark_root_dir: /opt/tdp
+spark_install_dir: '{{ spark_root_dir }}/spark'
+spark_conf_dir: /etc/spark
+spark_client_conf_dir: '{{ spark_conf_dir }}/conf'
+spark_hs_conf_dir: '{{ spark_conf_dir }}/conf.hs'
+hbase_conf_dir: /etc/hbase
+hbase_client_conf_dir: '{{ hbase_conf_dir }}/conf'
+hbase_install_dir: '{{ spark_root_dir }}/hbase'
+spark_pid_dir: /var/run/spark
+spark_enable_r: false
+spark_root_logger: RFA
+spark_root_logger_level: INFO
+spark_log_dir: '{{ spark2_log_dir }}'
+spark_hs_log_file: '{{ spark2_hs_log_file }}'
+spark_log_layout_pattern: '{{ tdp_log_layout_pattern }}'
+spark_log_drfa_date_pattern: '''.''yyyy-MM-dd-HH-mm'
+spark_log_rfa_maxfilesize: 256MB
+spark_log_rfa_maxbackupindex: 10
+hadoop_conf_dir: /etc/hadoop/conf
+hadoop_home: /opt/tdp/hadoop
+hdfs_user: hdfs
+krb_create_principals_keytabs: true
+spark_keystore_location: /etc/ssl/certs/keystore.jks
+spark_keystore_password: Keystore123!
+spark_truststore_location: /etc/ssl/certs/truststore.jks
+spark_truststore_password: Truststore123!
+spark_ui_spnego_principal: HTTP/{{ ansible_fqdn }}@{{ realm }}
+spark_ui_spnego_keytab: /etc/security/keytabs/spnego.service.keytab
+spark_defaults_common:
+  spark.acls.enable: 'true'
+  spark.ui.view.acls: spark
+  spark.shuffle.service.port: '{{ spark_shuffle_service_port }}'
+  spark.port.maxRetries: '{{ spark_port_max_retries }}'
+  spark.driver.port: '{{ spark_driver_bind_port }}'
+  spark.blockManager.port: '{{ spark_blockmanager_bind_port }}'
+  spark.ui.port: '{{ spark_ui_bind_port }}'
+spark_defaults_client:
+  spark.eventLog.dir: hdfs://{{ cluster_name }}/spark-logs
+  spark.eventLog.enabled: 'true'
+  spark.hadoop.yarn.timeline-service.enabled: 'false'
+  spark.yarn.historyServer.address: '{{ groups[''spark_hs''][0] | tosit.tdp.access_fqdn(hostvars) }}:{{ spark_hs_https_port }}'
+  spark.master: yarn
+  spark.datasource.hive.warehouse.metastoreUri: "{{ groups['hive_ms'] |\n  map('tosit.tdp.access_fqdn', hostvars) |\n  map('regex_replace', '^', 'thrift://')|\n  map('regex_replace', '^(.*)$', '\\1:' + hive_metastore_listener_port | string) |\n  list |\n  join(',') }}"
+  spark.hadoop.hive.zookeeper.quorum: "{{ groups['zk'] |\n  map('tosit.tdp.access_fqdn', hostvars) |\n  map('regex_replace', '^(.*)$', '\\1:' + zookeeper_server_client_port | string) |\n  list |\n  join(',') }}"
+  spark.sql.hive.metastore.jars.path: /opt/tdp/hive/lib/
+  spark.submit.deployMode: cluster
+  spark.executor.instances: 2
+  spark.yarn.am.cores: 1
+  spark.yarn.am.memory: 640m
+  spark.driver.cores: 1
+  spark.driver.memory: 640m
+  spark.executor.cores: 1
+  spark.executor.memory: 640m
+spark_defaults_hs:
+  spark.history.kerberos.enabled: 'true'
+  spark.history.kerberos.keytab: /etc/security/keytabs/spark.service.keytab
+  spark.history.kerberos.principal: spark/{{ ansible_fqdn }}@{{ realm }}
+  spark.history.ui.acls.enable: 'true'
+  spark.history.ui.admin.acls: knox
+  spark.history.ui.port: '{{ spark_hs_http_port }}'
+  spark.ui.filters: org.apache.hadoop.security.authentication.server.AuthenticationFilter
+  spark.org.apache.hadoop.security.authentication.server.AuthenticationFilter.params: type=kerberos,kerberos.principal={{ spark_ui_spnego_principal }},kerberos.keytab={{ spark_ui_spnego_keytab }},cookie.domain={{ http_cookie_domain }},signature.secret.file={{ http_secret_location }}
+  spark.ssl.historyServer.enabled: 'true'
+  spark.ssl.historyServer.keyStore: '{{ spark_keystore_location }}'
+  spark.ssl.historyServer.keyStorePassword: '{{ spark_keystore_password }}'
+  spark.ssl.historyServer.port: '{{ spark_hs_https_port }}'
+  spark.history.fs.logDirectory: hdfs://{{ cluster_name }}/spark-logs
+  spark.history.provider: org.apache.spark.deploy.history.FsHistoryProvider
+  spark.ui.proxyBase: '{% if ''knox'' in groups and groups[''knox''] %}/gateway/tdpldap/sparkhistory{% endif %}'
+spark_env_common:
+  HADOOP_CONF_DIR: '{{ hadoop_conf_dir }}'
+  HADOOP_HOME: '{{ hadoop_home }}'
+  HIVE_CONF_DIR: '{{ spark_client_conf_dir }}'
+  LD_LIBRARY_PATH: '''{{ hadoop_home }}/lib/native/:$LD_LIBRARY_PATH'''
+  PYSPARK_PYTHON: python3
+spark_env_hs:
+  SPARK_LOG_DIR: '{{ spark_log_dir }}'
+  SPARK_DAEMON_JAVA_OPTS: '''{{ jmx_common_opts }} -Dcom.sun.management.jmxremote.password.file={{ spark_hs_conf_dir }}/jmxremote.password {{ jmx_exporter_hs_opts }}'''
+  SPARK_DAEMON_MEMORY: '{{ spark2_hs_heapsize }}'
+spark_env_client: null
+hive_site_spark:
+  hive.metastore.uris: "{{ groups['hive_ms'] |\n  map('tosit.tdp.access_fqdn', hostvars) |\n  map('regex_replace', '^', 'thrift://')|\n  map('regex_replace', '^(.*)$', '\\1:' + hive_metastore_listener_port | string) |\n  list |\n  join(',') }}"
+  metastore.thrift.uri.selection: RANDOM
+  hive.exec.scratchdir: /tmp/spark
+  hive.metastore.client.connect.retry.delay: 5
+  hive.metastore.client.socket.timeout: 1800
+  hive.server2.enable.doAs: 'false'
+  hive.server2.transport.mode: http
+  hive.server2.thrift.port: '{{ hive_hiveserver2_thrift_port }}'
+  hive.server2.thrift.http.port: '{{ hive_hiveserver2_thrift_http_port }}'
+  hive.metastore.sasl.enabled: 'true'
+  hadoop.security.authentication: kerberos
+  hive.metastore.kerberos.principal: hive/_HOST@{{ realm }}
+  hive.metastore.execute.setugi: 'true'
+  hadoop.rpc.protection: AUTHENTICATION
+  hive.execution.engine: spark
+spark2_hs_heapsize: 1024m
+jmx_exporter_hs_opts: '{% if ''exporter_jmx'' in groups and groups[''exporter_jmx''] %}-javaagent:{{ jmx_exporter_install_file }}={{ exporter_spark_hs_http_port }}:{{ jmx_exporter_conf_dir }}/{{ spark_version }}-hs.yml{% else %}{% endif %}'
+jmxremote_username: jmxuser
+jmxremote_password: Tdpjmx123,
+jmx_exporter:
+  startDelaySeconds: 0
+  ssl: true
+  username: '{{ jmxremote_username }}'
+  password: '{{ jmxremote_password }}'
+  lowercaseOutputName: false
+  lowercaseOutputLabelNames: false
+spark_hs_start_on_boot: true
+spark_hs_restart: always

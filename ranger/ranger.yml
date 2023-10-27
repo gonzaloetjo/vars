@@ -1,0 +1,121 @@
+ranger_release: ranger-2.0.0-1.0-admin
+ranger_dist_file: '{{ ranger_release }}.tar.gz'
+ranger_usersync_release: ranger-2.0.0-1.0-usersync
+ranger_usersync_dist_file: '{{ ranger_usersync_release }}.tar.gz'
+ranger_kms_release: ranger-2.0.0-1.0-kms
+ranger_kms_dist_file: '{{ ranger_kms_release }}.tar.gz'
+ranger_user: ranger
+ranger_kms_user: keyadmin
+hadoop_group: hadoop
+ranger_root_dir: /opt/tdp
+ranger_install_dir: '{{ ranger_root_dir }}/ranger'
+ranger_usersync_install_dir: '{{ ranger_root_dir }}/ranger-usersync'
+ranger_kms_install_dir: '{{ ranger_root_dir }}/ranger-kms'
+ranger_conf_dir: /etc/ranger
+ranger_adm_conf_dir: '{{ ranger_conf_dir }}/conf.adm'
+ranger_kms_conf_dir: /etc/kms
+ranger_pid_dir: /var/run/ranger
+ranger_usersync_pid_dir: /var/run/ranger-usersync
+ranger_kms_pid_dir: /var/run/ranger-kms
+ranger_root_logger: RFA
+ranger_root_logger_level: INFO
+ranger_log_layout_pattern: '{{ tdp_log_layout_pattern }}'
+ranger_log_drfa_date_pattern: '''.''yyyy-MM-dd-HH-mm'
+ranger_solr_log_drfa_date_pattern: '%d{yyyy-MM-dd-HH-mm}'
+ranger_log_drfa_maxbackupindex: 30
+ranger_log_rfa_maxfilesize: 256MB
+ranger_log_rfa_maxbackupindex: 10
+ranger_admin_password: RangerAdmin123
+ranger_tagsync_password: RangerTagsync123
+ranger_usersync_password: RangerUsersync123
+ranger_keyadmin_password: RangerKeyAdmin123
+krb_create_principals_keytabs: true
+ranger_keystore_location: /etc/ssl/certs/keystore.jks
+ranger_keystore_password: Keystore123!
+ranger_truststore_location: /etc/ssl/certs/truststore.jks
+ranger_truststore_password: Truststore123!
+ranger_jdbc_connector_package: postgresql-jdbc
+install_properties:
+  setup_mode: SeparateDBA
+  DB_FLAVOR: postgres
+  SQL_CONNECTOR_JAR: /usr/share/java/postgresql-jdbc.jar
+  db_host: '{{ groups[''postgresql''][0] | tosit.tdp.access_fqdn(hostvars) }}:5432'
+  db_name: ranger
+  db_user: rangeradmin
+  db_password: rangeradmin
+  audit_store: '{% if ''ranger_solr'' in groups and groups[''ranger_solr''] %}solr{% else %}db{% endif %}'
+  audit_solr_urls: '{% if ''ranger_solr'' in groups and groups[''ranger_solr''] %}http://{{ groups[''ranger_solr''][0] | tosit.tdp.access_fqdn(hostvars) }}:{{ ranger_solr_http_port }}/solr/ranger_audits{% else %}{% endif %}'
+kms_install_properties:
+  setup_mode: SeparateDBA
+  DB_FLAVOR: postgres
+  SQL_CONNECTOR_JAR: /usr/share/java/postgresql-jdbc.jar
+  db_host: '{{ groups[''postgresql''][0] | tosit.tdp.access_fqdn(hostvars) }}:5432'
+  db_name: rangerkms
+  db_user: rangerkms
+  db_password: rangerkms
+  POLICY_MGR_URL: '{% if ranger_ha_address is defined %}{{ ranger_ha_address }}{% else %}https://{{ groups[''ranger_admin''][0] | tosit.tdp.access_fqdn(hostvars) }}:{{ ranger_adm_https_port }}{% endif %}'
+  REPOSITORY_NAME: kms-tdp
+  XAAUDIT_SOLR_ENABLE: '{% if ''ranger_solr'' in groups and groups[''ranger_solr''] %}true{% else %}false{% endif %}'
+  XAAUDIT_SOLR_URL: '{% if ''ranger_solr'' in groups and groups[''ranger_solr''] %}http://{{ groups[''ranger_solr''][0] | tosit.tdp.access_fqdn(hostvars) }}:{{ ranger_solr_http_port }}/solr/ranger_audits{% else %}NONE{% endif %}'
+usersync_install_properties:
+  POLICY_MGR_URL: '{% if ranger_ha_address is defined %}{{ ranger_ha_address }}{% else %}https://{{ groups[''ranger_admin''][0] | tosit.tdp.access_fqdn(hostvars) }}:{{ ranger_adm_https_port }}{% endif %}'
+  SYNC_SOURCE: ldap
+  SYNC_INTERVAL: 360
+  SYNC_LDAP_URL: '{{ ldap.address }}'
+  SYNC_LDAP_BIND_DN: '{{ ldap.bind_dn }}'
+  SYNC_LDAP_BIND_PASSWORD: '{{ ldap.password }}'
+  SYNC_LDAP_SEARCH_BASE: '{{ ldap.search_base }}'
+  SYNC_LDAP_USER_SEARCH_BASE: '{{ ldap.user_search_base }}'
+  SYNC_LDAP_USER_OBJECT_CLASS: '{{ ldap.user_object_class }}'
+  SYNC_LDAP_USER_NAME_ATTRIBUTE: '{{ ldap.user_name_attribute }}'
+  SYNC_LDAP_USER_SEARCH_FILTER: '{{ ldap.user_search_filter }}'
+  SYNC_GROUP_SEARCH_ENABLED: '{{ ldap.group_search_enabled }}'
+  SYNC_GROUP_USER_MAP_SYNC_ENABLED: '{{ ldap.group_user_map_enabled }}'
+  SYNC_GROUP_SEARCH_BASE: '{{ ldap.group_search_base }}'
+  SYNC_LDAP_GROUP_SEARCH_FILTER: '{{ ldap.group_search_filter }}'
+ranger_admin_start_on_boot: true
+ranger_usersync_start_on_boot: true
+ranger_kms_start_on_boot: true
+ranger_solr_start_on_boot: true
+ranger_admin_restart: always
+ranger_usync_restart: always
+ranger_kms_restart: always
+solr_release: solr-7.7.3
+solr_dist_file: '{{ solr_release }}.tgz'
+solr_user: solr
+solr_root_dir: /opt/tdp
+solr_install_dir: '{{ solr_root_dir }}/ranger_solr'
+solr_conf_dir: /etc/ranger_solr
+solr_adm_conf_dir: '{{ solr_conf_dir }}/conf'
+solr_pid_dir: /var/run/ranger_solr
+solr_bootstrap_config_dir: /tmp/ranger_audits_config
+solr_max_audit_retention_days: 30
+solr_restart: 'no'
+ranger_admin_heapsize: 1024m
+ranger_kms_heapsize: 1024m
+ranger_usersync_heapsize: 1024m
+ranger_solr_heapsize: 1024m
+ranger_solr_datadir: '{{ solr_root_dir }}/{{ solr_release }}/server/solr'
+jmx_exporter_root_dir: /opt/tdp/jmx-exporter
+jmx_exporter_install_file: '{{ jmx_exporter_root_dir }}/jmx-exporter.jar'
+jmx_exporter_conf_dir: /etc/jmx-exporter
+jmx_common_opts: -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.ssl=true
+jmx_exporter_ra_opts: '{% if ''exporter_jmx'' in groups and groups[''exporter_jmx''] %}-javaagent:{{ jmx_exporter_install_file }}={{ exporter_ranger_ra_http_port }}:{{ jmx_exporter_conf_dir }}/ra.yml{% else %}{% endif %}'
+jmx_exporter_ru_opts: '{% if ''exporter_jmx'' in groups and groups[''exporter_jmx''] %}-javaagent:{{ jmx_exporter_install_file }}={{ exporter_ranger_ru_http_port }}:{{ jmx_exporter_conf_dir }}/ru.yml{% else %}{% endif %}'
+jmx_exporter_kms_opts: '{% if ''exporter_jmx'' in groups and groups[''exporter_jmx''] %}-javaagent:{{ jmx_exporter_install_file }}={{ exporter_ranger_kms_http_port }}:{{ jmx_exporter_conf_dir }}/ra.yml{% else %}{% endif %}'
+jmxremote_username: jmxuser
+jmxremote_password: Tdpjmx123,
+jmx_exporter:
+  startDelaySeconds: 0
+  ssl: true
+  username: '{{ jmxremote_username }}'
+  password: '{{ jmxremote_password }}'
+  lowercaseOutputName: false
+  lowercaseOutputLabelNames: false
+python_interpreter: python2
+ranger_admin_site:
+  ranger.service.http.port: '{{ ranger_adm_http_port }}'
+  ranger.service.https.port: '{{ ranger_adm_https_port }}'
+ranger_kms_site:
+  ranger.service.http.port: '{{ ranger_kms_http_port }}'
+  ranger.service.https.port: '{{ ranger_kms_https_port }}'

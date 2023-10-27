@@ -1,0 +1,152 @@
+binaries_local_dir: '{{ lookup(''env'', ''PWD'') }}/files'
+binaries_upload_dir: /tmp
+cluster_name: mycluster
+kerberos_kdc_port: 88
+kerberos_admin_port: 749
+kerberos_kdcproxy_port: 443
+openldap_server_ldap_port: 389
+openldap_server_ldaps_port: 636
+postgresql_server_port: 5432
+zookeeper_server_client_port: 2181
+zookeeper_server_quorum_port: 2888
+zookeeper_server_election_port: 3888
+ranger_adm_http_port: 6080
+ranger_adm_https_port: 6182
+ranger_kms_http_port: 9292
+ranger_kms_https_port: 9393
+ranger_usersync_https_port: 5151
+ranger_solr_http_port: 8983
+hdfs_zkfc_rpc_port: 8019
+hdfs_nn_rpc_port: 8020
+hdfs_nn_http_port: 9870
+hdfs_nn_https_port: 9871
+hdfs_dn_data_port: 9866
+hdfs_dn_ipc_port: 9867
+hdfs_dn_https_port: 9865
+hdfs_dn_http_port: 9864
+hdfs_jn_rpc_port: 8485
+hdfs_jn_https_port: 8481
+hdfs_jn_http_port: 8480
+hdfs_httpfs_port: 14000
+yarn_rm_scheduler_port: 8030
+yarn_rm_tracker_port: 8031
+yarn_rm_jobs_port: 8032
+yarn_rm_admin_port: 8033
+yarn_rm_http_port: 8088
+yarn_rm_https_port: 8090
+yarn_nm_localizer_port: 8040
+yarn_nm_rpc_port: 45454
+yarn_nm_http_port: 8042
+yarn_nm_https_port: 8044
+yarn_ats_rpc_port: 10200
+yarn_ats_https_port: 8190
+mapred_sh_shuffle_port: 13562
+mapred_am_bind_portrange: 50000-50999
+mapred_jhs_rpc_port: 10201
+mapred_jhs_admin_port: 10033
+mapred_jhs_http_port: 19888
+mapred_jhs_https_port: 19890
+hive_hiveserver2_thrift_port: 10000
+hive_hiveserver2_thrift_http_port: 10001
+hive_hiveserver2_webui_port: 0
+hive_metastore_listener_port: 9083
+tez_am_task_portrange: 51000-51999
+tez_am_client_portrange: 52000-52999
+hbase_master_rpc_port: 16000
+hbase_master_info_port: 16010
+hbase_rs_rpc_port: 16020
+hbase_rs_info_port: 16030
+hbase_rest_client_port: 8080
+hbase_rest_info_port: 8085
+phoenix_queryserver_http_port: 8765
+spark_hs_http_port: 18080
+spark_hs_https_port: 18081
+spark_shuffle_service_port: 7337
+spark_port_max_retries: 499
+spark_driver_bind_port: 53000
+spark_blockmanager_bind_port: 53500
+spark_ui_bind_port: 54000
+spark3_hs_http_port: 18082
+spark3_hs_https_port: 18083
+spark3_shuffle_service_port: 7338
+spark3_port_max_retries: 499
+spark3_driver_bind_port: 53000
+spark3_blockmanager_bind_port: 53500
+spark3_ui_bind_port: 54000
+knox_gateway_http_port: 8443
+exporter_hdfs_nn_http_port: 18101
+exporter_hdfs_zkfc_http_port: 18102
+exporter_hdfs_jn_http_port: 18103
+exporter_hdfs_dn_http_port: 18104
+exporter_yarn_rm_http_port: 18105
+exporter_yarn_nm_http_port: 18106
+exporter_yarn_ats_http_port: 18107
+exporter_mapred_jhs_http_port: 18108
+exporter_zookeeper_server_http_port: 18109
+exporter_hbase_hm_http_port: 18110
+exporter_hbase_hrs_http_port: 18111
+exporter_hbase_hr_http_port: 18112
+exporter_hbase_pqs_http_port: 18113
+exporter_hive_hs2_http_port: 18114
+exporter_hive_hms_http_port: 18115
+exporter_knox_gateway_http_port: 18116
+exporter_ranger_ra_http_port: 18117
+exporter_ranger_ru_http_port: 18118
+exporter_ranger_kms_http_port: 18119
+exporter_spark_hs_http_port: 18120
+exporter_spark3_hs_http_port: 18121
+exporter_hdfs_httpfs_http_port: 18122
+tdp_date_iso8601_with_tz: '%d{yyyy-MM-dd''T''hh:mm:ss.SSSXXX}'
+tdp_log_layout_pattern: '{{ tdp_date_iso8601_with_tz }} - %-5p [%t:%C{1}@%L] - %m%n'
+hadoop_log_dir: /var/log/hadoop
+hdfs_log_dir: /var/log/hdfs
+hadoop_hdfs_namenode_log_file: hdfs-namenode_{{ ansible_fqdn }}.log
+hadoop_hdfs_journalnode_log_file: hdfs-journalnode_{{ ansible_fqdn }}.log
+hadoop_hdfs_zkfc_log_file: hdfs-zkfc_{{ ansible_fqdn }}.log
+hadoop_hdfs_datanode_log_file: hdfs-datanode_{{ ansible_fqdn }}.log
+hadoop_hdfs_httpfs_log_file: hdfs-httpfs_{{ ansible_fqdn }}.log
+yarn_log_dir: /var/log/yarn
+hadoop_yarn_resourcemanager_log_file: yarn-resourcemanager_{{ ansible_fqdn }}.log
+hadoop_yarn_nodemanager_log_file: yarn-nodemanager_{{ ansible_fqdn }}.log
+hadoop_yarn_timelineserver_log_file: yarn-timelineserver_{{ ansible_fqdn }}.log
+mapred_log_dir: /var/log/mapred
+hadoop_mapred_historyserver_log_file: mapred-historyserver_{{ ansible_fqdn }}.log
+hbase_log_dir: /var/log/hbase
+hbase_hm_log_file: hbase-master_{{ ansible_fqdn }}.log
+hbase_hrs_log_file: hbase-regionserver_{{ ansible_fqdn }}.log
+hbase_hr_log_file: hbase-rest_{{ ansible_fqdn }}.log
+phoenix_log_dir: /var/log/phoenix
+phoenix_queryserver_log_file: phoenix-queryserver_{{ ansible_fqdn }}.log
+hive_log_dir: /var/log/hive
+hive_s2_log_file: hive-hiveserver2_{{ ansible_fqdn }}.log
+hive_ms_log_file: hive-metastore_{{ ansible_fqdn }}.log
+knox_log_dir: /var/log/knox
+knox_gateway_log_file: knox-gateway_{{ ansible_fqdn }}.log
+ranger_log_dir: /var/log/ranger
+ranger_admin_log_file: ranger-admin_{{ ansible_fqdn }}.log
+ranger_usersync_log_file: ranger-usersync_{{ ansible_fqdn }}.log
+ranger_solr_log_file: ranger-solr_{{ ansible_fqdn }}.log
+ranger_kms_log_dir: /var/log/kms
+ranger_kms_log_file: ranger-kms_{{ ansible_fqdn }}.log
+spark2_log_dir: /var/log/spark
+spark2_hs_log_file: spark-historyserver_{{ ansible_fqdn }}.log
+spark3_log_dir: /var/log/spark3
+spark3_hs_log_file: spark3-historyserver_{{ ansible_fqdn }}.log
+zookeeper_log_dir: /var/log/zookeeper
+zookeeper_log_file: zookeeper-server_{{ ansible_fqdn }}.log
+zookeeper_tracelog_file: zookeeper-server_{{ ansible_fqdn }}_trace.log
+ldap:
+  address: ldap://{{ groups['ldap'][0] | tosit.tdp.access_fqdn(hostvars) }}
+  port: 389
+  bind_dn: cn=Manager,ou=tdp,o=tosit,c=io
+  password: secret
+  search_base: c=io
+  user_search_base: ou=users,c=io
+  user_object_class: posixAccount
+  user_name_attribute: uid
+  user_search_filter: ''
+  user_dn_template: uid={0},ou=users,c=io
+  group_search_enabled: 'false'
+  group_user_map_enabled: 'false'
+  group_search_base: ou=groups,c=fr
+  group_search_filter: ''

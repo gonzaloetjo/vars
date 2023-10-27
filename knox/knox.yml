@@ -1,0 +1,153 @@
+knox_release: knox-1.6.1-0.0
+knox_dist_file: '{{ knox_release }}.tar.gz'
+knoxshell_release: knoxshell-1.6.1-0.0
+knoxshell_dist_file: '{{ knoxshell_release }}.tar.gz'
+hdfs_user: hdfs
+knox_user: knox
+knox_group: hadoop
+knox_root_dir: /opt/tdp
+knox_install_dir: '{{ knox_root_dir }}/knox'
+knoxshell_install_dir: '{{ knox_root_dir }}/knoxshell'
+knox_pid_dir: /var/run/knox
+knox_root_logger_level: INFO
+knox_root_logger: RFA
+knox_log_layout_pattern: '{{ tdp_log_layout_pattern }}'
+knox_log_drfa_date_pattern: '''.''yyyy-MM-dd'
+knox_log_rfa_maxfilesize: 256MB
+knox_log_rfa_maxbackupindex: 10
+knox_conf_dir: /etc/knox/conf
+knox_data_dir: /var/lib/knox
+knox_keystore_dir: '{{ knox_data_dir }}/data/security/keystores'
+krb_create_principals_keytabs: true
+knox_keystore_location: /etc/ssl/certs/keystore.jks
+knox_keystore_password: Keystore123!
+knox_truststore_location: /etc/ssl/certs/truststore.jks
+knox_truststore_password: Truststore123!
+hadoop_conf_dir: /etc/hadoop/conf
+gateway_site:
+  gateway.port: '{{ knox_gateway_http_port }}'
+  gateway.path: gateway
+  gateway.hadoop.kerberos.secured: 'true'
+  java.security.krb5.conf: /etc/krb5.conf
+  java.security.auth.login.config: '{{ knox_conf_dir }}/krb5JAASLogin.conf'
+  gateway.deployment.dir: '{{ knox_data_dir }}/data/deployments'
+  gateway.security.dir: '{{ knox_data_dir }}/data/security'
+  gateway.data.dir: '{{ knox_data_dir }}/data'
+  gateway.hadoop.conf.dir: '{{ knox_conf_dir }}'
+  gateway.cluster.config.monitor.ambari.enabled: 'false'
+  gateway.metrics.enabled: 'true'
+  gateway.jmx.metrics.reporting.enabled: 'true'
+  gateway.truststore.path: '{{ knox_truststore_location }}'
+  gateway.httpclient.truststore.path: '{{ knox_truststore_location }}'
+  gateway.tls.keystore.path: '{{ knox_keystore_location }}'
+  gateway.tls.key.alias: '{{ ansible_fqdn }}'
+topology_common_ha_configuration: maxFailoverAttempts=3;failoverSleep=1000;maxRetryAttempts=300;retrySleep=1000;enabled=true
+zookeeper_quorum: "{{ groups['zk'] |\n  map('tosit.tdp.access_fqdn', hostvars) |\n  map('regex_replace', '^(.*)$', '\\1:' + zookeeper_server_client_port | string) |\n  list |\n  join(',') }}\n"
+knox_secrets:
+  ldap-password: '{{ ldap.password }}'
+  gateway-identity-keystore-password: '{{ knox_keystore_password }}'
+  gateway-truststore-password: '{{ knox_truststore_password }}'
+  gateway-httpclient-truststore-password: '{{ knox_truststore_password }}'
+gateway_topology:
+  tdpldap:
+    providers:
+      authentication:
+        name: ShiroProvider
+        parameters:
+          main.ldapRealm: org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm
+          main.ldapContextFactory: org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory
+          main.ldapRealm.contextFactory: $ldapContextFactory
+          main.ldapRealm.contextFactory.authenticationMechanism: simple
+          main.ldapRealm.contextFactory.url: '{{ ldap.address }}:{{ ldap.port }}'
+          main.ldapRealm.contextFactory.systemUsername: '{{ ldap.bind_dn }}'
+          main.ldapRealm.contextFactory.systemPassword: ${ALIAS=ldap-password}
+          main.ldapRealm.userDnTemplate: '{{ ldap.user_dn_template }}'
+          sessionTimeout: 30
+          urls./**: authcBasic
+      authorization:
+        name: AclsAuthz
+        parameters:
+          webhdfs.acl: '*;*;*'
+      ha:
+        name: HaProvider
+        parameters:
+          HIVE: '{{ topology_common_ha_configuration }};zookeeperEnsemble={{ zookeeper_quorum | trim }};zookeeperNamespace=hiveserver2'
+          RESOURCEMANAGER: '{{ topology_common_ha_configuration }}'
+          WEBHBASE: '{{ topology_common_ha_configuration }}'
+          WEBHDFS: '{{ topology_common_ha_configuration }}'
+          YARNUI: '{{ topology_common_ha_configuration }}'
+          HBASEUI: '{{ topology_common_ha_configuration }}'
+          HDFSUI: '{{ topology_common_ha_configuration }}'
+          NAMENODE: '{{ topology_common_ha_configuration }}'
+          LIVYSERVER: '{{ topology_common_ha_configuration }}'
+      identity-assertion:
+        name: Default
+    services:
+      NAMENODE:
+        hosts: '{{ groups[''hdfs_nn''] | default([]) | map(''tosit.tdp.access_fqdn'', hostvars) | list }}'
+        port: '{{ hdfs_nn_rpc_port }}'
+        scheme: hdfs://
+      HDFSUI:
+        hosts: '{{ groups[''hdfs_nn''] | default([]) | map(''tosit.tdp.access_fqdn'', hostvars) | list }}'
+        port: '{{ hdfs_nn_https_port }}'
+        version: 2.7.0
+      JOBHISTORYUI:
+        hosts:
+        - '{{ groups[''mapred_jhs''] | default([]) | map(''tosit.tdp.access_fqdn'', hostvars) | first }}'
+        port: '{{ mapred_jhs_https_port }}'
+      HIVE: {}
+      RESOURCEMANAGER:
+        hosts: '{{ groups[''yarn_rm''] | default([]) | map(''tosit.tdp.access_fqdn'', hostvars) | list }}'
+        location: /ws
+        port: '{{ yarn_rm_https_port }}'
+      SPARKHISTORYUI:
+        hosts: '{{ groups[''spark_hs''] | default([]) | map(''tosit.tdp.access_fqdn'', hostvars) | list }}'
+        port: '{{ spark_hs_https_port }}'
+      SPARK3HISTORYUI:
+        hosts: '{{ groups[''spark3_hs''] | default([]) | map(''tosit.tdp.access_fqdn'', hostvars) | list }}'
+        port: '{{ spark3_hs_https_port}}'
+      WEBHBASE:
+        hosts: '{{ groups[''hbase_rest''] | default([]) | map(''tosit.tdp.access_fqdn'', hostvars) | list }}'
+        port: '{{ hbase_rest_client_port }}'
+      WEBHDFS:
+        hosts: '{{ groups[''hdfs_nn''] | default([]) | map(''tosit.tdp.access_fqdn'', hostvars) | list }}'
+        location: /webhdfs
+        port: '{{ hdfs_nn_https_port }}'
+      YARNUI:
+        hosts: '{{ groups[''yarn_rm''] | default([]) | map(''tosit.tdp.access_fqdn'', hostvars) | list }}'
+        port: '{{ yarn_rm_https_port }}'
+      HBASEUI:
+        hosts: '{{ groups[''hbase_master''] | default([]) | map(''tosit.tdp.access_fqdn'', hostvars) | list }}'
+        port: '{{ hbase_master_info_port }}'
+      LIVYSERVER:
+        hosts: '{% if groups[''livy_spark3_server''] is defined %}{{ groups[''livy_spark3_server''] | default([]) | map(''tosit.tdp.access_fqdn'', hostvars) | list }}{% else %}{% endif %}'
+        port: '8999'
+knox_start_on_boot: true
+knox_restart: always
+ranger_knox_release: ranger-2.0.0-1.0-knox-plugin
+ranger_knox_dist_file: '{{ ranger_knox_release }}.tar.gz'
+ranger_knox_install_dir: '{{ knox_root_dir }}/ranger-knox-plugin'
+ranger_knox_install_properties:
+  audit_hdfs: hdfs://{{ cluster_name }}
+  POLICY_MGR_URL: '{% if ranger_ha_address is defined %}{{ ranger_ha_address }}{% else %}https://{{ groups[''ranger_admin''][0] | tosit.tdp.access_fqdn(hostvars) }}:{{ ranger_adm_https_port }}{% endif %}'
+  REPOSITORY_NAME: knox-tdp
+  XAAUDIT_SOLR_ENABLE: '{% if ''ranger_solr'' in groups and groups[''ranger_solr''] %}true{% else %}false{% endif %}'
+  XAAUDIT_SOLR_URL: '{% if ''ranger_solr'' in groups and groups[''ranger_solr''] %}http://{{ groups[''ranger_solr''][0] | tosit.tdp.access_fqdn(hostvars) }}:{{ ranger_solr_http_port }}/solr/ranger_audits{% else %}NONE{% endif %}'
+ranger_knox_service_properties:
+  knox_url: https://{{ groups['knox'][0] | tosit.tdp.access_fqdn(hostvars) }}:{{ knox_gateway_http_port }}
+  common_name_certificate: "{{ groups['knox'] |\n  map('tosit.tdp.access_fqdn', hostvars) |\n  list |\n  join(',') | trim }}\n"
+knox_gateway_heapsize: 1024m
+jmx_exporter_root_dir: /opt/tdp/jmx-exporter
+jmx_exporter_install_file: '{{ jmx_exporter_root_dir }}/jmx-exporter.jar'
+jmx_exporter_conf_dir: /etc/jmx-exporter
+jmx_common_opts: -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.ssl=true
+jmx_exporter_kn_opts: '{% if ''exporter_jmx'' in groups and groups[''exporter_jmx''] %}-javaagent:{{ jmx_exporter_install_file }}={{ exporter_knox_gateway_http_port }}:{{ jmx_exporter_conf_dir }}/kn.yml{% else %}{% endif %}'
+jmxremote_username: jmxuser
+jmxremote_password: Tdpjmx123,
+jmx_exporter:
+  startDelaySeconds: 0
+  ssl: true
+  username: '{{ jmxremote_username }}'
+  password: '{{ jmxremote_password }}'
+  lowercaseOutputName: false
+  lowercaseOutputLabelNames: false

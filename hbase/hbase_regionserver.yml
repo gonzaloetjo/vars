@@ -1,0 +1,2 @@
+ssl_server:
+  hadoop.security.credential.provider.path: localjceks://file{{ hbase_rs_conf_dir }}/{{ hadoop_credentials_store_file }}

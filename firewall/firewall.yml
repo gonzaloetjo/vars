@@ -1,0 +1,2 @@
+firewall_tdp_managed: true
+firewall_start_on_boot: true

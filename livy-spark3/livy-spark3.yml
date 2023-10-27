@@ -1,0 +1,2 @@
+livy_start_on_boot: true
+livy_restart: always
